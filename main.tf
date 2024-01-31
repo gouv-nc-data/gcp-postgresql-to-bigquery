@@ -45,9 +45,9 @@ resource "google_project_iam_custom_role" "dataflow-custom-role" {
 
 resource "google_project_iam_member" "dataflow_custom_worker_bindings" {
   project    = var.project_id
-  role       = "projects/${var.project_id}/roles/${google_project_iam_custom_role.dataproc-custom-role.role_id}"
+  role       = "projects/${var.project_id}/roles/${google_project_iam_custom_role.dataflow-custom-role.role_id}"
   member     = "serviceAccount:${google_service_account.service_account.email}"
-  depends_on = [google_project_iam_custom_role.dataproc-custom-role]
+  depends_on = [google_project_iam_custom_role.dataflow-custom-role]
 }
 
 resource "google_service_account_iam_member" "gce-default-account-iam" {
@@ -172,7 +172,7 @@ resource "google_monitoring_alert_policy" "errors" {
   conditions {
     display_name = "Error condition"
     condition_matched_log {
-      filter = "severity=ERROR AND resource.type=cloud_dataproc_cluster"
+      filter = "severity=ERROR AND resource.type=cloud_dataflow_cluster"
     }
   }
 
