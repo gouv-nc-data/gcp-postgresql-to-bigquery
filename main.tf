@@ -79,7 +79,7 @@ resource "google_project_iam_member" "service_account_bindings_dataflow_worker" 
 
 resource "google_storage_bucket" "bucket" {
   project                     = var.project_id
-  name                        = "bucket-df-${var.dataset_name}"
+  name                        = "bucket-pg2bq-${var.dataset_name}"
   location                    = var.region
   storage_class               = "REGIONAL"
   uniform_bucket_level_access = true
