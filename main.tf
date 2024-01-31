@@ -145,8 +145,6 @@ resource "google_cloud_scheduler_job" "job" {
               schema: var.schema,
               exclude: var.exclude
               mode: "overwrite"
-              stagingLocation : "gs://${google_storage_bucket.bucket.name}/staging",
-              serviceAccount : google_service_account.service_account.email,
             },
             environment : {
               numWorkers : 1,
