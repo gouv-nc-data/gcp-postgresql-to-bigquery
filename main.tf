@@ -35,7 +35,7 @@ resource "google_project_iam_member" "storage_admin_bindings" {
 
 resource "google_project_iam_custom_role" "dataflow-custom-role" {
   project     = var.project_id
-  role_id     = "dataflow_custom_role_${var.dataset_name}"
+  role_id     = "pg2bq_custom_role_${var.dataset_name}"
   title       = "Dataflow Custom Role"
   description = "Role custom pour pouvoir créer des job dataflow depuis scheduler"
   permissions = ["iam.serviceAccounts.actAs", "dataflow.jobs.create", "storage.objects.create", "storage.objects.delete",
