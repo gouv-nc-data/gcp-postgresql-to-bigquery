@@ -160,6 +160,22 @@ resource "google_cloud_scheduler_job" "job" {
   depends_on = [google_project_service.cloudschedulerapi]
 }
 
+data "google_artifact_registry_repository" "template-repo" {
+  project       = "prj-dinum-data-templates-66aa"
+  location      = var.region
+  repository_id = "template-repository"
+}
+
+resource "google_artifact_registry_repository_iam_binding" "binding" {
+  project    = data.google_artifact_registry_repository.template-repo.project
+  location   = data.google_artifact_registry_repository.template-repo.location
+  repository = data.google_artifact_registry_repository.template-repo.name
+  role       = "roles/artifactregistry.reader"
+  members = [
+    "serviceAccount:${google_service_account.service_account.email}",
+  ]
+}
+
 ###############################
 # Supervision
 ###############################
