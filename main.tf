@@ -21,15 +21,9 @@ resource "google_project_iam_member" "bigquery_user_bindings" {
   member  = "serviceAccount:${google_service_account.service_account.email}"
 }
 
-resource "google_project_iam_member" "dataflow_developer_bindings" {
-  project = var.project_id
-  role    = "roles/dataproc.editor"
-  member  = "serviceAccount:${google_service_account.service_account.email}"
-}
-
 resource "google_project_iam_member" "dataflow_worker_bindings" {
   project = var.project_id
-  role    = "roles/dataproc.worker"
+  role    = "roles/dataflow.worker"
   member  = "serviceAccount:${google_service_account.service_account.email}"
 }
 
@@ -39,12 +33,13 @@ resource "google_project_iam_member" "storage_admin_bindings" {
   member  = "serviceAccount:${google_service_account.service_account.email}"
 }
 
-resource "google_project_iam_custom_role" "dataproc-custom-role" {
+resource "google_project_iam_custom_role" "dataflow-custom-role" {
   project     = var.project_id
-  role_id     = "pg2bq_dataproc_custom_role_${var.dataset_name}"
-  title       = "Dataproc Custom Role"
-  description = "Role custom pour pouvoir créer des job dataproc depuis scheduler"
-  permissions = ["iam.serviceAccounts.actAs", "dataproc.workflowTemplates.instantiate"]
+  role_id     = "dataflow_custom_role_${var.dataset_name}"
+  title       = "Dataflow Custom Role"
+  description = "Role custom pour pouvoir créer des job dataflow depuis scheduler"
+  permissions = ["iam.serviceAccounts.actAs", "dataflow.jobs.create", "storage.objects.create", "storage.objects.delete",
+                  "storage.objects.get", "storage.objects.getIamPolicy", "storage.objects.list"]
 }
 
 
@@ -66,9 +61,33 @@ resource "google_project_iam_member" "cloud_scheduler_runner_bindings" {
   role    = "roles/cloudscheduler.jobRunner"
   member  = "serviceAccount:${google_service_account.service_account.email}"
 }
+resource "google_project_iam_member" "service_account_bindings_dataflow_admin" {
+  project  = var.project_id
+  role     = "roles/dataflow.admin"
+  member   = "serviceAccount:${google_service_account.service_account.email}"
+}
+
+resource "google_project_iam_member" "service_account_bindings_dataflow_worker" {
+  project  = var.project_id
+  role     = "roles/dataflow.worker"
+  member   = "serviceAccount:${google_service_account.service_account.email}"
+}
 
 ####
-# Dataproc
+# Bucket
+####
+
+resource "google_storage_bucket" "bucket" {
+  project                     = var.project_id
+  name                        = "bucket-df-${var.dataset_name}"
+  location                    = var.region
+  storage_class               = "REGIONAL"
+  uniform_bucket_level_access = true
+  force_destroy               = true
+}
+
+####
+# Dataflow
 ####
 
 resource "google_storage_bucket_iam_member" "access_to_script" {
@@ -87,9 +106,9 @@ resource "google_project_service" "cloudschedulerapi" {
   service = "cloudscheduler.googleapis.com"
 }
 
-resource "google_project_service" "dataprocrapi" {
+resource "google_project_service" "dataflowrapi" {
   project = var.project_id
-  service = "dataproc.googleapis.com"
+  service = "dataflow.googleapis.com"
 }
 
 data "google_secret_manager_secret_version" "jdbc-url-secret" {
@@ -110,41 +129,30 @@ resource "google_cloud_scheduler_job" "job" {
 
   http_target {
     http_method = "POST"
-    uri         = "https://dataproc.googleapis.com/v1/projects/${var.project_id}/locations/${var.region}/batches/"
+    uri         = "https://dataflow.googleapis.com/v1b3/projects/${var.project_id}/locations/${var.region}/flexTemplates:launch"
     oauth_token {
       service_account_email = google_service_account.service_account.email
     }
     body = base64encode(
       jsonencode(
         {
-          "pysparkBatch" : {
-            "jarFileUris" : [
-              "gs://bucket-prj-dinum-data-templates-66aa/postgresql-42.2.6.jar"
-            ],
-            "args" : [
-              "--jdbc-url=${data.google_secret_manager_secret_version.jdbc-url-secret.secret_data}",
-              "--schema=${var.schema}",
-              "--dataset=${var.dataset_name}",
-              "--exclude=${var.exclude}"
-            ],
-            "mainPythonFileUri" : "gs://bucket-prj-dinum-data-templates-66aa/postgresql_to_bigquery.py"
-          },
-          "runtimeConfig" : {
-            "version" : "2.1",
-            "properties" : {
-              "spark.executor.instances" : "2",
-              "spark.driver.cores" : "4",
-              "spark.driver.memory" : "9600m",
-              "spark.executor.cores" : "4",
-              "spark.executor.memory" : "9600m",
-              "spark.dynamicAllocation.executorAllocationRatio" : "0.3",
-              "spark.hadoop.fs.gs.inputstream.support.gzip.encoding.enable": "true"
-            }
-          },
-          "environmentConfig" : {
-            "executionConfig" : {
-              "serviceAccount" : google_service_account.service_account.email,
-              "subnetworkUri" : "subnet-for-vpn"
+          launchParameter : {
+            jobName : "pg2bq-${var.dataset_name}",
+            containerSpecGcsPath : "gs://bucket-prj-dinum-data-templates-66aa/df_postgresql_to_bigquery.json",
+            parameters : {
+              dataset: var.dataset_name,
+              jdbc-url: data.google_secret_manager_secret_version.jdbc-url-secret.secret_data 
+              schema: var.schema,
+              exclude: var.exclude
+              mode: "overwrite"
+              stagingLocation : "gs://${google_storage_bucket.bucket.name}/staging",
+              serviceAccount : google_service_account.service_account.email,
+            },
+            environment : {
+              numWorkers : 1,
+              tempLocation : "gs://${google_storage_bucket.bucket.name}/tmp",
+              subnetwork : "regions/${var.region}/subnetworks/subnet-for-vpn",
+              serviceAccountEmail: google_service_account.service_account.email,
             }
           }
         }
