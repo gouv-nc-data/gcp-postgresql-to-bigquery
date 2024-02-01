@@ -144,7 +144,8 @@ resource "google_cloud_scheduler_job" "job" {
               jdbc-url: data.google_secret_manager_secret_version.jdbc-url-secret.secret_data 
               schema: var.schema,
               exclude: var.exclude
-              mode: "overwrite"
+              mode: "overwrite",
+              workerMachineType: "n1-standard-2"
             },
             environment : {
               numWorkers : 1,
