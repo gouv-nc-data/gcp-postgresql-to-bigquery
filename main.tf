@@ -145,13 +145,15 @@ resource "google_cloud_scheduler_job" "job" {
               schema: var.schema,
               exclude: var.exclude
               mode: "overwrite",
-              workerMachineType: "n1-standard-2"
+              workerMachineType: "n1-standard-2",
+      
             },
             environment : {
               numWorkers : 1,
               tempLocation : "gs://${google_storage_bucket.bucket.name}/tmp",
               subnetwork : "regions/${var.region}/subnetworks/subnet-for-vpn",
               serviceAccountEmail: google_service_account.service_account.email,
+              machineType: "n1-standard-2"
             }
           }
         }
@@ -180,21 +182,21 @@ resource "google_artifact_registry_repository_iam_binding" "binding" {
 ###############################
 # Supervision
 ###############################
-resource "google_monitoring_alert_policy" "errors" {
-  display_name = "Errors in logs alert policy on ${var.dataset_name}"
-  project      = var.project_id
-  combiner     = "OR"
-  conditions {
-    display_name = "Error condition"
-    condition_matched_log {
-      filter = "severity=ERROR AND resource.type=cloud_dataflow_cluster"
-    }
-  }
+# resource "google_monitoring_alert_policy" "errors" {
+#   display_name = "Errors in logs alert policy on ${var.dataset_name}"
+#   project      = var.project_id
+#   combiner     = "OR"
+#   conditions {
+#     display_name = "Error condition"
+#     condition_matched_log {
+#       filter = "severity=ERROR AND resource.type=cloud_dataflow_cluster"
+#     }
+#   }
 
-  notification_channels = var.notification_channels
-  alert_strategy {
-    notification_rate_limit {
-      period = "300s"
-    }
-  }
-}
+#   notification_channels = var.notification_channels
+#   alert_strategy {
+#     notification_rate_limit {
+#       period = "300s"
+#     }
+#   }
+# }
