@@ -41,7 +41,7 @@ resource "google_project_iam_member" "storage_admin_bindings" {
 
 resource "google_project_iam_custom_role" "dataproc-custom-role" {
   project     = var.project_id
-  role_id     = "pg2bq_dataproc_custom_role_${var.dataset_name}"
+  role_id     = "pg2bq_spark_custom_role_${var.dataset_name}"
   title       = "Dataproc Custom Role"
   description = "Role custom pour pouvoir créer des job dataproc depuis scheduler"
   permissions = ["iam.serviceAccounts.actAs", "dataproc.workflowTemplates.instantiate"]
