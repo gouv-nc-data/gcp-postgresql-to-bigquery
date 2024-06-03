@@ -138,7 +138,7 @@ resource "google_cloud_scheduler_job" "job" {
               "spark.executor.cores" : "4",
               "spark.executor.memory" : "9600m",
               "spark.dynamicAllocation.executorAllocationRatio" : "0.3",
-              "spark.hadoop.fs.gs.inputstream.support.gzip.encoding.enable": "true"
+              "spark.hadoop.fs.gs.inputstream.support.gzip.encoding.enable" : "true"
             }
           },
           "environmentConfig" : {
