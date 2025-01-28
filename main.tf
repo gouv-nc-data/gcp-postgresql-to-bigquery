@@ -6,6 +6,14 @@ locals {
   safe_gen_id    = length(var.generation_id) > 0 ? "#${var.generation_id}" : ""
 }
 
+resource "google_bigquery_dataset" "dataset" {
+  count = var.create_dataset ? 1 : 0
+
+  project    = var.project_id
+  dataset_id = var.dataset_name
+  location   = "EU"
+}
+
 resource "google_service_account" "service_account" {
   account_id   = "sa-pg2bq-${local.hyphen_ds_name}"
   display_name = "Service Account created by terraform for ${var.project_id}"
