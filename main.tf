@@ -1,11 +1,13 @@
 locals {
   parent_folder_id         = 658965356947 # production folder
   secret-managment-project = "prj-dinum-p-secret-mgnt-aaf4"
-  safe-ds-name = substr(lower(replace(var.dataset_name, "_", "-")),0,24)
+
+  hyphen_ds_name = substr(lower(replace(var.dataset_name, "_", "-")), 0, 24)
+  safe_gen_id    = length(var.generation_id) > 0 ? "#${var.generation_id}" : ""
 }
 
 resource "google_service_account" "service_account" {
-  account_id   = "sa-pg2bq-${local.safe-ds-name}"
+  account_id   = "sa-pg2bq-${local.hyphen_ds_name}"
   display_name = "Service Account created by terraform for ${var.project_id}"
   project      = var.project_id
 }
@@ -100,7 +102,7 @@ data "google_secret_manager_secret_version" "jdbc-url-secret" {
 
 resource "google_cloud_scheduler_job" "job" {
   project          = var.project_id
-  name             = "pg2bq-job-${local.safe-ds-name}"
+  name             = "pg2bq-job-${local.hyphen_ds_name}"
   schedule         = var.schedule
   time_zone        = "Pacific/Noumea"
   attempt_deadline = "320s"
@@ -128,7 +130,7 @@ resource "google_cloud_scheduler_job" "job" {
               "--dataset=${var.dataset_name}",
               "--exclude=${var.exclude}"
             ],
-            "mainPythonFileUri" : "gs://bucket-prj-dinum-data-templates-66aa/postgresql_to_bigquery.py"
+            "mainPythonFileUri" : "gs://bucket-prj-dinum-data-templates-66aa/postgresql_to_bigquery.py${local.safe_gen_id}"
           },
           "runtimeConfig" : {
             "version" : "2.1",
@@ -145,7 +147,8 @@ resource "google_cloud_scheduler_job" "job" {
           "environmentConfig" : {
             "executionConfig" : {
               "serviceAccount" : google_service_account.service_account.email,
-              "subnetworkUri" : "subnet-for-vpn"
+              "subnetworkUri" : "${var.subnetwork_name}",
+              "ttl": "${var.ttl}"
             }
           }
         }
@@ -165,7 +168,7 @@ resource "google_monitoring_alert_policy" "errors" {
   conditions {
     display_name = "Error condition"
     condition_matched_log {
-      filter = "severity=ERROR AND resource.type=cloud_dataproc_cluster"
+      filter = "severity=ERROR resource.type=\"cloud_dataproc_batch\""
     }
   }
 

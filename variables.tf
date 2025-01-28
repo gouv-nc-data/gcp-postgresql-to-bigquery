@@ -49,3 +49,21 @@ variable "mode" {
   description = "type d'upload sur bigquery"
   default     = "overwrite"
 }
+
+variable "generation_id" {
+  type        = string
+  description = "generation id du ficheir dans le bucket"
+  default     = ""
+}
+
+variable "subnetwork_name" {
+  type        = string
+  description = "subnetwork du job"
+  default     = "subnet-for-vpn"
+}
+
+variable "ttl" {
+  type        = string
+  description = "Durée maximum d'un job en seconde, https://cloud.google.com/dataproc-serverless/docs/quickstarts/spark-batch?hl=fr#dataproc_serverless_create_batch_workload-api"
+  default     = "14400s"
+}
