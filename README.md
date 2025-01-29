@@ -8,3 +8,7 @@ Pour permettre l'exécution du job il faut demander aux DBA de définir cette co
 ALTER ROLE user IN DATABASE schema
     SET search_path TO schema;
 ```
+
+<!-- BEGIN_TF_DOCS -->
+
+<!-- END_TF_DOCS -->
