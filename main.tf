@@ -20,35 +20,21 @@ resource "google_service_account" "service_account" {
   project      = var.project_id
 }
 
-resource "google_project_iam_member" "bigquery_editor_bindings" {
+resource "google_project_iam_member" "roles_bindings" {
+  for_each = toset([
+    "roles/bigquery.dataEditor",
+    "roles/bigquery.user",
+    "roles/dataproc.editor",
+    "roles/dataproc.worker",
+    "roles/storage.objectViewer",
+    "roles/cloudscheduler.jobRunner"
+  ])
+
   project = var.project_id
-  role    = "roles/bigquery.dataEditor"
+  role    = each.value
   member  = "serviceAccount:${google_service_account.service_account.email}"
 }
 
-resource "google_project_iam_member" "bigquery_user_bindings" {
-  project = var.project_id
-  role    = "roles/bigquery.user"
-  member  = "serviceAccount:${google_service_account.service_account.email}"
-}
-
-resource "google_project_iam_member" "dataflow_developer_bindings" {
-  project = var.project_id
-  role    = "roles/dataproc.editor"
-  member  = "serviceAccount:${google_service_account.service_account.email}"
-}
-
-resource "google_project_iam_member" "dataflow_worker_bindings" {
-  project = var.project_id
-  role    = "roles/dataproc.worker"
-  member  = "serviceAccount:${google_service_account.service_account.email}"
-}
-
-resource "google_project_iam_member" "storage_admin_bindings" {
-  project = var.project_id
-  role    = "roles/storage.objectViewer"
-  member  = "serviceAccount:${google_service_account.service_account.email}"
-}
 
 resource "google_project_iam_custom_role" "dataproc-custom-role" {
   project     = var.project_id
@@ -72,12 +58,6 @@ resource "google_service_account_iam_member" "gce-default-account-iam" {
   service_account_id = google_service_account.service_account.name
 }
 
-resource "google_project_iam_member" "cloud_scheduler_runner_bindings" {
-  project = var.project_id
-  role    = "roles/cloudscheduler.jobRunner"
-  member  = "serviceAccount:${google_service_account.service_account.email}"
-}
-
 ####
 # Dataproc
 ####
@@ -88,20 +68,18 @@ resource "google_storage_bucket_iam_member" "access_to_script" {
   member = "serviceAccount:${google_service_account.service_account.email}"
 }
 
-resource "google_project_service" "secretmanagerapi" {
+resource "google_project_service" "api_activation" {
+  for_each = toset([
+    "cloudscheduler.googleapis.com",
+    "dataproc.googleapis.com",
+    "secretmanager.googleapis.com"
+  ])
   project = var.project_id
-  service = "secretmanager.googleapis.com"
+  service = each.value
+
+  disable_on_destroy = false
 }
 
-resource "google_project_service" "cloudschedulerapi" {
-  project = var.project_id
-  service = "cloudscheduler.googleapis.com"
-}
-
-resource "google_project_service" "dataprocrapi" {
-  project = var.project_id
-  service = "dataproc.googleapis.com"
-}
 
 data "google_secret_manager_secret_version" "jdbc-url-secret" {
   project = local.secret-managment-project
@@ -163,7 +141,7 @@ resource "google_cloud_scheduler_job" "job" {
       )
     )
   }
-  depends_on = [google_project_service.cloudschedulerapi]
+  depends_on = [google_project_service.api_activation[0]]
 }
 
 ###############################
