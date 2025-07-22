@@ -86,6 +86,14 @@ data "google_secret_manager_secret_version" "jdbc-url-secret" {
   secret  = var.jdbc-url-secret-name
 }
 
+resource "google_storage_bucket" "bucket_upload" {
+  project                     = var.project_id
+  name                        = "bucket-${var.dataset_name}"
+  location                    = var.region
+  uniform_bucket_level_access = true
+}
+
+
 resource "google_cloud_scheduler_job" "job" {
   project          = var.project_id
   name             = "pg2bq-job-${local.hyphen_ds_name}"
@@ -114,7 +122,8 @@ resource "google_cloud_scheduler_job" "job" {
               "--jdbc-url=${data.google_secret_manager_secret_version.jdbc-url-secret.secret_data}",
               "--schema=${var.schema}",
               "--dataset=${var.dataset_name}",
-              "--exclude=${var.exclude}"
+              "--exclude=${var.exclude}",
+              "--bucket=${google_storage_bucket.bucket_upload.name}"
             ],
             "mainPythonFileUri" : "gs://bucket-prj-dinum-data-templates-66aa/postgresql_to_bigquery.py${local.safe_gen_id}"
           },
