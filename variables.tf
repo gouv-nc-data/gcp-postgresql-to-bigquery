@@ -84,6 +84,6 @@ variable "runtimeConfig_version" {
 variable "driver_file_name" {
   type        = string
   description = "Nom du fichier driver"
-  default     = "postgresql-42.2.6.jar"
+  default     = "postgresql-42.7.7.jar"
   
 }
