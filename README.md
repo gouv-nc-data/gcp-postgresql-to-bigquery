@@ -47,6 +47,7 @@ No modules.
 |------|-------------|------|---------|:--------:|
 | <a name="input_create_dataset"></a> [create\_dataset](#input\_create\_dataset) | Créer le dataset si il n'existe pas | `bool` | `false` | no |
 | <a name="input_dataset_name"></a> [dataset\_name](#input\_dataset\_name) | nom du projet | `string` | n/a | yes |
+| <a name="input_driver_file_name"></a> [driver\_file\_name](#input\_driver\_file\_name) | Nom du fichier driver | `string` | `"postgresql-42.2.6.jar"` | no |
 | <a name="input_exclude"></a> [exclude](#input\_exclude) | liste des tables à ne pas migrer | `string` | `""` | no |
 | <a name="input_generation_id"></a> [generation\_id](#input\_generation\_id) | generation id du ficheir dans le bucket | `string` | `""` | no |
 | <a name="input_group_name"></a> [group\_name](#input\_group\_name) | Google groupe associé au projet | `string` | n/a | yes |
@@ -55,6 +56,7 @@ No modules.
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | canal de notification pour les alertes sur dataproc | `list(string)` | n/a | yes |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | id du projet | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | n/a | `string` | `"europe-west1"` | no |
+| <a name="input_runtimeConfig_version"></a> [runtimeConfig\_version](#input\_runtimeConfig\_version) | Version de la configuration runtime | `string` | `"2.3"` | no |
 | <a name="input_schedule"></a> [schedule](#input\_schedule) | expression cron de schedule du job | `string` | n/a | yes |
 | <a name="input_schema"></a> [schema](#input\_schema) | schema contenant les tables à migrer | `string` | n/a | yes |
 | <a name="input_subnetwork_name"></a> [subnetwork\_name](#input\_subnetwork\_name) | subnetwork du job | `string` | `"subnet-for-vpn"` | no |
