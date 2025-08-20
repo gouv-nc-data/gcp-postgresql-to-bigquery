@@ -116,7 +116,7 @@ resource "google_cloud_scheduler_job" "job" {
         {
           "pysparkBatch" : {
             "jarFileUris" : [
-              "gs://bucket-prj-dinum-data-templates-66aa/postgresql-42.2.6.jar"
+              "gs://bucket-prj-dinum-data-templates-66aa/${var.driver_file_name}"
             ],
             "args" : [
               "--jdbc-url=${data.google_secret_manager_secret_version.jdbc-url-secret.secret_data}",
@@ -128,7 +128,7 @@ resource "google_cloud_scheduler_job" "job" {
             "mainPythonFileUri" : "gs://bucket-prj-dinum-data-templates-66aa/postgresql_to_bigquery.py${local.safe_gen_id}"
           },
           "runtimeConfig" : {
-            "version" : "2.1",
+            "version" : "${var.runtimeConfig_version}",
             "properties" : {
               "spark.executor.instances" : "2",
               "spark.driver.cores" : "4",

@@ -74,3 +74,16 @@ variable "create_dataset" {
   default     = false
 }
 
+variable "runtimeConfig_version" {
+  type        = string
+  description = "Version de la configuration runtime"
+  default     = "2.3"
+  
+}
+
+variable "driver_file_name" {
+  type        = string
+  description = "Nom du fichier driver"
+  default     = "postgresql-42.2.6.jar"
+  
+}
