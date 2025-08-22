@@ -107,7 +107,7 @@ data "google_secret_manager_secret_version" "jdbc-url-secret" {
 
 resource "google_storage_bucket" "bucket_upload" {
   project                     = var.project_id
-  name                        = "bucket-${var.dataset_name}"
+  name                        = "bucket-${var.dataset_name}-${local.job_suffix}"
   location                    = var.region
   uniform_bucket_level_access = true
 }
