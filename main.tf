@@ -48,6 +48,8 @@ resource "google_project_iam_member" "roles_bindings" {
 
 
 resource "google_project_iam_custom_role" "dataproc-custom-role" {
+  count = local.create_service_account ? 1 : 0
+
   project     = var.project_id
   role_id     = "pg2bq_spark_custom_role_${var.dataset_name}"
   title       = "Dataproc Custom Role"
@@ -60,7 +62,7 @@ resource "google_project_iam_member" "dataflow_custom_worker_bindings" {
   count = local.create_service_account ? 1 : 0
 
   project    = var.project_id
-  role       = "projects/${var.project_id}/roles/${google_project_iam_custom_role.dataproc-custom-role.role_id}"
+  role       = "projects/${var.project_id}/roles/${google_project_iam_custom_role.dataproc-custom-role[0].role_id}"
   member     = "serviceAccount:${local.service_account_email}"
   depends_on = [google_project_iam_custom_role.dataproc-custom-role]
 }
