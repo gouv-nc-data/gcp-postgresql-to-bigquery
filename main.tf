@@ -4,6 +4,12 @@ locals {
 
   hyphen_ds_name = substr(lower(replace(var.dataset_name, "_", "-")), 0, 24)
   safe_gen_id    = length(var.generation_id) > 0 ? "#${var.generation_id}" : ""
+
+  # Déterminer si on doit créer un Service Account
+  create_service_account = var.service_account_email == ""
+
+  # Email du Service Account à utiliser (fourni ou créé)
+  service_account_email = var.service_account_email != "" ? var.service_account_email : (local.create_service_account ? google_service_account.service_account[0].email : "")
 }
 
 resource "google_bigquery_dataset" "dataset" {
@@ -15,24 +21,26 @@ resource "google_bigquery_dataset" "dataset" {
 }
 
 resource "google_service_account" "service_account" {
+  count = local.create_service_account ? 1 : 0
+
   account_id   = "sa-pg2bq-${local.hyphen_ds_name}"
   display_name = "Service Account created by terraform for ${var.project_id}"
   project      = var.project_id
 }
 
 resource "google_project_iam_member" "roles_bindings" {
-  for_each = toset([
+  for_each = local.create_service_account ? toset([
     "roles/bigquery.dataEditor",
     "roles/bigquery.user",
     "roles/dataproc.editor",
     "roles/dataproc.worker",
     "roles/storage.objectViewer",
     "roles/cloudscheduler.jobRunner"
-  ])
+  ]) : toset([])
 
   project = var.project_id
   role    = each.value
-  member  = "serviceAccount:${google_service_account.service_account.email}"
+  member  = "serviceAccount:${local.service_account_email}"
 }
 
 
@@ -46,16 +54,20 @@ resource "google_project_iam_custom_role" "dataproc-custom-role" {
 
 
 resource "google_project_iam_member" "dataflow_custom_worker_bindings" {
+  count = local.create_service_account ? 1 : 0
+
   project    = var.project_id
   role       = "projects/${var.project_id}/roles/${google_project_iam_custom_role.dataproc-custom-role.role_id}"
-  member     = "serviceAccount:${google_service_account.service_account.email}"
+  member     = "serviceAccount:${local.service_account_email}"
   depends_on = [google_project_iam_custom_role.dataproc-custom-role]
 }
 
 resource "google_service_account_iam_member" "gce-default-account-iam" {
+  count = local.create_service_account ? 1 : 0
+
   role               = "roles/iam.serviceAccountUser"
-  member             = "serviceAccount:${google_service_account.service_account.email}"
-  service_account_id = google_service_account.service_account.name
+  member             = "serviceAccount:${local.service_account_email}"
+  service_account_id = google_service_account.service_account[0].name
 }
 
 ####
@@ -63,9 +75,11 @@ resource "google_service_account_iam_member" "gce-default-account-iam" {
 ####
 
 resource "google_storage_bucket_iam_member" "access_to_script" {
+  count = local.create_service_account ? 1 : 0
+
   bucket = "bucket-prj-dinum-data-templates-66aa"
   role   = "roles/storage.objectViewer"
-  member = "serviceAccount:${google_service_account.service_account.email}"
+  member = "serviceAccount:${local.service_account_email}"
 }
 
 resource "google_project_service" "api_activation" {
@@ -109,7 +123,7 @@ resource "google_cloud_scheduler_job" "job" {
     http_method = "POST"
     uri         = "https://dataproc.googleapis.com/v1/projects/${var.project_id}/locations/${var.region}/batches/"
     oauth_token {
-      service_account_email = google_service_account.service_account.email
+      service_account_email = local.service_account_email
     }
     body = base64encode(
       jsonencode(
@@ -123,6 +137,7 @@ resource "google_cloud_scheduler_job" "job" {
               "--schema=${var.schema}",
               "--dataset=${var.dataset_name}",
               "--exclude=${var.exclude}",
+              "--only-tables=${var.only}",
               "--bucket=${google_storage_bucket.bucket_upload.name}"
             ],
             "mainPythonFileUri" : "gs://bucket-prj-dinum-data-templates-66aa/postgresql_to_bigquery.py${local.safe_gen_id}"
@@ -141,9 +156,9 @@ resource "google_cloud_scheduler_job" "job" {
           },
           "environmentConfig" : {
             "executionConfig" : {
-              "serviceAccount" : google_service_account.service_account.email,
+              "serviceAccount" : local.service_account_email,
               "subnetworkUri" : "${var.subnetwork_name}",
-              "ttl": "${var.ttl}"
+              "ttl" : "${var.ttl}"
             }
           }
         }

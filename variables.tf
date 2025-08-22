@@ -78,12 +78,24 @@ variable "runtimeConfig_version" {
   type        = string
   description = "Version de la configuration runtime"
   default     = "2.3"
-  
+
 }
 
 variable "driver_file_name" {
   type        = string
   description = "Nom du fichier driver"
   default     = "postgresql-42.7.7.jar"
-  
+
+}
+
+variable "service_account_email" {
+  type        = string
+  description = "Email du Service Account à utiliser. Si non spécifié, un nouveau Service Account sera créé."
+  default     = ""
+}
+
+variable "only" {
+  type        = string
+  description = "Liste des tables à migrer, séparées par des virgules"
+  default     = ""
 }
