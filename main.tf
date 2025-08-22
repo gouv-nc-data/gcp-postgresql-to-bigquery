@@ -4,12 +4,15 @@ locals {
 
   hyphen_ds_name = substr(lower(replace(var.dataset_name, "_", "-")), 0, 24)
   safe_gen_id    = length(var.generation_id) > 0 ? "#${var.generation_id}" : ""
-
+  
   # Déterminer si on doit créer un Service Account
   create_service_account = var.service_account_email == ""
-
+  
   # Email du Service Account à utiliser (fourni ou créé)
   service_account_email = var.service_account_email != "" ? var.service_account_email : (local.create_service_account ? google_service_account.service_account[0].email : "")
+  
+  # Générer un suffixe unique pour le nom du job
+  job_suffix = substr(md5("${var.dataset_name}-${var.schedule}-${var.schema}"), 0, 4)
 }
 
 resource "google_bigquery_dataset" "dataset" {
@@ -110,7 +113,7 @@ resource "google_storage_bucket" "bucket_upload" {
 
 resource "google_cloud_scheduler_job" "job" {
   project          = var.project_id
-  name             = "pg2bq-job-${local.hyphen_ds_name}"
+  name             = "pg2bq-job-${local.hyphen_ds_name}-${local.job_suffix}"
   schedule         = var.schedule
   time_zone        = "Pacific/Noumea"
   attempt_deadline = "320s"
