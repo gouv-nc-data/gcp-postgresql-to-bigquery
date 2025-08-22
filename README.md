@@ -54,15 +54,19 @@ No modules.
 | <a name="input_jdbc-url-secret-name"></a> [jdbc-url-secret-name](#input\_jdbc-url-secret-name) | nom du secret contenant l'url de connexion jdbc à la BDD | `string` | n/a | yes |
 | <a name="input_mode"></a> [mode](#input\_mode) | type d'upload sur bigquery | `string` | `"overwrite"` | no |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | canal de notification pour les alertes sur dataproc | `list(string)` | n/a | yes |
+| <a name="input_only"></a> [only](#input\_only) | Liste des tables à migrer, séparées par des virgules | `string` | `""` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | id du projet | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | n/a | `string` | `"europe-west1"` | no |
 | <a name="input_runtimeConfig_version"></a> [runtimeConfig\_version](#input\_runtimeConfig\_version) | Version de la configuration runtime | `string` | `"2.3"` | no |
 | <a name="input_schedule"></a> [schedule](#input\_schedule) | expression cron de schedule du job | `string` | n/a | yes |
 | <a name="input_schema"></a> [schema](#input\_schema) | schema contenant les tables à migrer | `string` | n/a | yes |
+| <a name="input_service_account_email"></a> [service\_account\_email](#input\_service\_account\_email) | Email du Service Account à utiliser. Si non spécifié, un nouveau Service Account sera créé. | `string` | `""` | no |
 | <a name="input_subnetwork_name"></a> [subnetwork\_name](#input\_subnetwork\_name) | subnetwork du job | `string` | `"subnet-for-vpn"` | no |
 | <a name="input_ttl"></a> [ttl](#input\_ttl) | Durée maximum d'un job en seconde, https://cloud.google.com/dataproc-serverless/docs/quickstarts/spark-batch?hl=fr#dataproc_serverless_create_batch_workload-api | `string` | `"14400s"` | no |
 
 ## Outputs
 
-No outputs.
+| Name | Description |
+|------|-------------|
+| <a name="output_service_account_email"></a> [service\_account\_email](#output\_service\_account\_email) | Email du Service Account utilisé par le module |
 <!-- END_TF_DOCS -->
