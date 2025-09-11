@@ -49,7 +49,7 @@ No modules.
 | <a name="input_dataset_name"></a> [dataset\_name](#input\_dataset\_name) | nom du projet | `string` | n/a | yes |
 | <a name="input_driver_file_name"></a> [driver\_file\_name](#input\_driver\_file\_name) | Nom du fichier driver | `string` | `"postgresql-42.7.7.jar"` | no |
 | <a name="input_exclude"></a> [exclude](#input\_exclude) | liste des tables à ne pas migrer | `string` | `""` | no |
-| <a name="input_generation_id"></a> [generation\_id](#input\_generation\_id) | generation id du ficheir dans le bucket | `string` | `""` | no |
+| <a name="input_generation_id"></a> [generation\_id](#input\_generation\_id) | generation id du fichier dans le bucket | `string` | `""` | no |
 | <a name="input_group_name"></a> [group\_name](#input\_group\_name) | Google groupe associé au projet | `string` | n/a | yes |
 | <a name="input_jdbc-url-secret-name"></a> [jdbc-url-secret-name](#input\_jdbc-url-secret-name) | nom du secret contenant l'url de connexion jdbc à la BDD | `string` | n/a | yes |
 | <a name="input_mode"></a> [mode](#input\_mode) | type d'upload sur bigquery | `string` | `"overwrite"` | no |
