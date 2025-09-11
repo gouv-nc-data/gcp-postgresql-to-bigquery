@@ -52,7 +52,7 @@ variable "mode" {
 
 variable "generation_id" {
   type        = string
-  description = "generation id du ficheir dans le bucket"
+  description = "generation id du fichier dans le bucket"
   default     = ""
 }
 
