@@ -5,12 +5,12 @@ locals {
   hyphen_ds_name = substr(lower(replace(var.dataset_name, "_", "-")), 0, 24)
   safe_gen_id    = length(var.generation_id) > 0 ? "#${var.generation_id}" : ""
   
-  # Déterminer si on doit créer un Service Account
-  create_service_account = var.service_account_email == ""
-  
   # Email du Service Account à utiliser (fourni ou créé)
-  service_account_email = var.service_account_email != "" ? var.service_account_email : (local.create_service_account ? google_service_account.service_account[0].email : "")
-  
+  service_account_email = var.service_account_email != "" ? var.service_account_email : google_service_account.service_account[0].email
+
+  # Nom du bucket GCS pour les fichiers temporaires
+  bucket_name = var.bucket_name != "" ? var.bucket_name : google_storage_bucket.bucket_upload[0].name
+
   # Générer un suffixe unique pour le nom du job
   job_suffix = substr(md5("${var.dataset_name}-${var.schedule}-${var.schema}"), 0, 4)
 }
@@ -24,7 +24,7 @@ resource "google_bigquery_dataset" "dataset" {
 }
 
 resource "google_service_account" "service_account" {
-  count = local.create_service_account ? 1 : 0
+  count = var.service_account_email == "" ? 1 : 0
 
   account_id   = "sa-pg2bq-${local.hyphen_ds_name}"
   display_name = "Service Account created by terraform for ${var.project_id}"
@@ -32,7 +32,7 @@ resource "google_service_account" "service_account" {
 }
 
 resource "google_project_iam_member" "roles_bindings" {
-  for_each = local.create_service_account ? toset([
+  for_each = var.service_account_email == "" ? toset([
     "roles/bigquery.dataEditor",
     "roles/bigquery.user",
     "roles/dataproc.editor",
@@ -48,7 +48,7 @@ resource "google_project_iam_member" "roles_bindings" {
 
 
 resource "google_project_iam_custom_role" "dataproc-custom-role" {
-  count = local.create_service_account ? 1 : 0
+  count = var.service_account_email == "" ? 1 : 0
 
   project     = var.project_id
   role_id     = "pg2bq_spark_custom_role_${var.dataset_name}"
@@ -59,7 +59,7 @@ resource "google_project_iam_custom_role" "dataproc-custom-role" {
 
 
 resource "google_project_iam_member" "dataflow_custom_worker_bindings" {
-  count = local.create_service_account ? 1 : 0
+  count = var.service_account_email == "" ? 1 : 0
 
   project    = var.project_id
   role       = "projects/${var.project_id}/roles/${google_project_iam_custom_role.dataproc-custom-role[0].role_id}"
@@ -68,7 +68,7 @@ resource "google_project_iam_member" "dataflow_custom_worker_bindings" {
 }
 
 resource "google_service_account_iam_member" "gce-default-account-iam" {
-  count = local.create_service_account ? 1 : 0
+  count = var.service_account_email == "" ? 1 : 0
 
   role               = "roles/iam.serviceAccountUser"
   member             = "serviceAccount:${local.service_account_email}"
@@ -80,7 +80,7 @@ resource "google_service_account_iam_member" "gce-default-account-iam" {
 ####
 
 resource "google_storage_bucket_iam_member" "access_to_script" {
-  count = local.create_service_account ? 1 : 0
+  count = var.service_account_email == "" ? 1 : 0
 
   bucket = "bucket-prj-dinum-data-templates-66aa"
   role   = "roles/storage.objectViewer"
@@ -106,6 +106,8 @@ data "google_secret_manager_secret_version" "jdbc-url-secret" {
 }
 
 resource "google_storage_bucket" "bucket_upload" {
+  count                       = var.bucket_name == "" ? 1 : 0
+
   project                     = var.project_id
   name                        = "bucket-${var.dataset_name}"
   location                    = var.region
@@ -143,7 +145,7 @@ resource "google_cloud_scheduler_job" "job" {
               "--dataset=${var.dataset_name}",
               "--exclude=${var.exclude}",
               "--only-tables=${var.only}",
-              "--bucket=${google_storage_bucket.bucket_upload.name}"
+              "--bucket=${local.bucket_name}"
             ],
             "mainPythonFileUri" : "gs://bucket-prj-dinum-data-templates-66aa/postgresql_to_bigquery.py${local.safe_gen_id}"
           },
