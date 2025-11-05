@@ -52,7 +52,7 @@ variable "mode" {
 
 variable "generation_id" {
   type        = string
-  description = "generation id du ficheir dans le bucket"
+  description = "generation id du fichier dans le bucket"
   default     = ""
 }
 
@@ -90,12 +90,18 @@ variable "driver_file_name" {
 
 variable "service_account_email" {
   type        = string
-  description = "Email du Service Account à utiliser. Si non spécifié, un nouveau Service Account sera créé."
+  description = "Email du Service Account à utiliser. Si vide, un nouveau Service Account sera créé."
   default     = ""
 }
 
 variable "only" {
   type        = string
   description = "Liste des tables à migrer, séparées par des virgules"
+  default     = ""
+}
+
+variable "bucket_name" {
+  type        = string
+  description = "Nom du bucket GCS pour les fichiers temporaires"
   default     = ""
 }
