@@ -4,7 +4,7 @@ locals {
 
   hyphen_ds_name = substr(lower(replace(var.dataset_name, "_", "-")), 0, 24)
   safe_gen_id    = length(var.generation_id) > 0 ? "#${var.generation_id}" : ""
-  
+
   # Email du Service Account à utiliser (fourni ou créé)
   service_account_email = var.service_account_email != "" ? var.service_account_email : google_service_account.service_account[0].email
 
@@ -15,18 +15,11 @@ locals {
   job_suffix = substr(md5("${var.dataset_name}-${var.schedule}-${var.schema}"), 0, 4)
 }
 
-resource "google_bigquery_dataset" "dataset" {
-  count = var.create_dataset ? 1 : 0
-
-  project    = var.project_id
-  dataset_id = var.dataset_name
-  location   = "EU"
-}
 
 resource "google_service_account" "service_account" {
   count = var.service_account_email == "" ? 1 : 0
 
-  account_id   = "sa-pg2bq-${local.hyphen_ds_name}"
+  account_id   = "sa-pg2bq-${local.hyphen_ds_name}-${local.job_suffix}"
   display_name = "Service Account created by terraform for ${var.project_id}"
   project      = var.project_id
 }
@@ -106,7 +99,7 @@ data "google_secret_manager_secret_version" "jdbc-url-secret" {
 }
 
 resource "google_storage_bucket" "bucket_upload" {
-  count                       = var.bucket_name == "" ? 1 : 0
+  count = var.bucket_name == "" ? 1 : 0
 
   project                     = var.project_id
   name                        = "bucket-${var.dataset_name}-${local.job_suffix}"
@@ -144,7 +137,7 @@ resource "google_cloud_scheduler_job" "job" {
               "--schema=${var.schema}",
               "--dataset=${var.dataset_name}",
               "--exclude=${var.exclude}",
-              "--only-tables=${var.only}",
+              "--only=${var.only}",
               "--bucket=${local.bucket_name}"
             ],
             "mainPythonFileUri" : "gs://bucket-prj-dinum-data-templates-66aa/postgresql_to_bigquery.py${local.safe_gen_id}"
