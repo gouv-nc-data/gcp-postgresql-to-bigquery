@@ -40,24 +40,20 @@ resource "google_project_iam_member" "roles_bindings" {
 }
 
 
-resource "google_project_iam_custom_role" "dataproc-custom-role" {
-  count = var.service_account_email == "" ? 1 : 0
-
-  project     = var.project_id
-  role_id     = "pg2bq_spark_custom_role_${var.dataset_name}"
-  title       = "Dataproc Custom Role"
-  description = "Role custom pour pouvoir créer des job dataproc depuis scheduler"
-  permissions = ["iam.serviceAccounts.actAs", "dataproc.workflowTemplates.instantiate"]
+# Permission actAs pour le SA sur lui-même (nécessaire pour Dataproc Serverless) pour "iam.serviceAccounts.actAs" 
+resource "google_service_account_iam_member" "sa_act_as" {
+  count              = var.service_account_email == "" ? 1 : 0
+  service_account_id = google_service_account.service_account[0].name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${local.service_account_email}"
 }
 
-
-resource "google_project_iam_member" "dataflow_custom_worker_bindings" {
-  count = var.service_account_email == "" ? 1 : 0
-
-  project    = var.project_id
-  role       = "projects/${var.project_id}/roles/${google_project_iam_custom_role.dataproc-custom-role[0].role_id}"
-  member     = "serviceAccount:${local.service_account_email}"
-  depends_on = [google_project_iam_custom_role.dataproc-custom-role]
+# pour "dataproc.workflowTemplates.instantiate"
+resource "google_project_iam_member" "dataproc_instantiate" {
+  count   = var.service_account_email == "" ? 1 : 0
+  project = var.project_id
+  role    = "roles/dataproc.editor"
+  member  = "serviceAccount:${local.service_account_email}"
 }
 
 resource "google_service_account_iam_member" "gce-default-account-iam" {
