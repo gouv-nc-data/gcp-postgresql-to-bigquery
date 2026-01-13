@@ -4,14 +4,11 @@ on:
   push:
     branches: [ main ]
     paths:
-      - '**.tf'
-    paths-ignore:
-      - 'docs/**'
-      - 'README.md'
+      - '**/*.tf'
   pull_request:
-    paths-ignore:
-      - 'docs/**'
-      - 'README.md'
+    paths:
+      - '**/*.tf'
+
 permissions:
   contents: write
 
@@ -19,3 +16,5 @@ jobs:
   terraform:
     uses: gouv-nc-data/github-workflows/.github/workflows/terraform-docs.yml@main
     secrets: inherit
+
+
