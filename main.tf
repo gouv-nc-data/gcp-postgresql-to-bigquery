@@ -181,7 +181,9 @@ resource "google_monitoring_alert_policy" "errors" {
     condition_matched_log {
       # Les logs du driver d'un batch serverless remontent sous cloud_dataproc_cluster
       # (label cluster_name = srvls-batch-*), les logs de la plateforme sous cloud_dataproc_batch.
-      filter = "severity>=ERROR AND (resource.type=\"cloud_dataproc_batch\" OR resource.type=\"cloud_dataproc_cluster\")"
+      # "RECEIVED SIGNAL TERM" est logué en ERROR par les workers Spark à l'arrêt
+      # normal du batch : présent à chaque run, y compris ceux qui réussissent.
+      filter = "severity>=ERROR AND (resource.type=\"cloud_dataproc_batch\" OR resource.type=\"cloud_dataproc_cluster\") AND NOT jsonPayload.message=\"RECEIVED SIGNAL TERM\""
     }
   }
 
