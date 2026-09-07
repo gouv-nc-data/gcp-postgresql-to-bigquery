@@ -175,7 +175,9 @@ resource "google_monitoring_alert_policy" "errors" {
   conditions {
     display_name = "Error condition"
     condition_matched_log {
-      filter = "severity=ERROR resource.type=\"cloud_dataproc_batch\""
+      # Les logs du driver d'un batch serverless remontent sous cloud_dataproc_cluster
+      # (label cluster_name = srvls-batch-*), les logs de la plateforme sous cloud_dataproc_batch.
+      filter = "severity>=ERROR AND (resource.type=\"cloud_dataproc_batch\" OR resource.type=\"cloud_dataproc_cluster\")"
     }
   }
 
