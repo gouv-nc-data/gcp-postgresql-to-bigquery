@@ -3,7 +3,11 @@ locals {
   secret-managment-project = "prj-dinum-p-secret-mgnt-aaf4"
 
   hyphen_ds_name = substr(lower(replace(var.dataset_name, "_", "-")), 0, 24)
-  safe_gen_id    = length(var.generation_id) > 0 ? "#${var.generation_id}" : ""
+
+  # account_id d'un service account : 30 caractères maximum.
+  # "sa-pg2bq-" (9) + nom (16) + "-" (1) + job_suffix (4) = 30.
+  sa_ds_name  = substr(local.hyphen_ds_name, 0, 16)
+  safe_gen_id = length(var.generation_id) > 0 ? "#${var.generation_id}" : ""
 
   # Email du Service Account à utiliser (fourni ou créé)
   service_account_email = var.service_account_email != "" ? var.service_account_email : google_service_account.service_account[0].email
@@ -19,7 +23,7 @@ locals {
 resource "google_service_account" "service_account" {
   count = var.service_account_email == "" ? 1 : 0
 
-  account_id   = "sa-pg2bq-${local.hyphen_ds_name}-${local.job_suffix}"
+  account_id   = "sa-pg2bq-${local.sa_ds_name}-${local.job_suffix}"
   display_name = "Service Account created by terraform for ${var.project_id}"
   project      = var.project_id
 }
